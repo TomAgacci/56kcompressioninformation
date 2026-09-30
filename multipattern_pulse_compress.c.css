@@ -1,0 +1,96 @@
+/* ============================================================
+   multipattern_pulse_compress.c
+   ------------------------------------------------------------
+   Barebones multi-pattern pulse‑ohm compressor:
+   - Finds runs of repeated bytes (patterns)
+   - Stores them as a sequence of descriptors
+   - Writes to a .pcf/.pulse-style file
+   ============================================================ */
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+typedef struct {
+    uint8_t  value;      // repeated byte
+    uint32_t count;      // run length
+    uint32_t pulse_code; // placeholder timing
+} PulsePattern;
+
+void write_pcf(const char *filename, PulsePattern *patterns, size_t n) {
+    FILE *f = fopen(filename, "wb");
+    if (!f) return;
+
+    fwrite(&n, sizeof(size_t), 1, f);  // number of patterns
+    for (size_t i = 0; i < n; i++) {
+        fwrite(&patterns[i].value,      1, 1, f);
+        fwrite(&patterns[i].count,      4, 1, f);
+        fwrite(&patterns[i].pulse_code, 4, 1, f);
+    }
+
+    fclose(f);
+}
+
+size_t multipattern_compress(uint8_t *data, size_t len, PulsePattern **out) {
+    PulsePattern *patterns = malloc(sizeof(PulsePattern) * len); // worst case
+    size_t n = 0;
+
+    if (len == 0) {
+        *out = NULL;
+        return 0;
+    }
+
+    uint8_t  current = data[0];
+    uint32_t count   = 1;
+
+    for (size_t i = 1; i < len; i++) {
+        if (data[i] == current) {
+            count++;
+        } else {
+            patterns[n].value      = current;
+            patterns[n].count      = count;
+            patterns[n].pulse_code = 0x56000000 | (n & 0xFFFF);
+            n++;
+
+            current = data[i];
+            count   = 1;
+        }
+    }
+
+    patterns[n].value      = current;
+    patterns[n].count      = count;
+    patterns[n].pulse_code = 0x56000000 | (n & 0xFFFF);
+    n++;
+
+    *out = patterns;
+    return n;
+}
+
+int main(int argc, char **argv) {
+    if (argc < 3) {
+        printf("Usage: multipattern_pulse_compress <input> <output.pcf>\n");
+        return 1;
+    }
+
+    FILE *in = fopen(argv[1], "rb");
+    if (!in) return 1;
+
+    fseek(in, 0, SEEK_END);
+    size_t len = ftell(in);
+    fseek(in, 0, SEEK_SET);
+
+    uint8_t *buffer = malloc(len);
+    fread(buffer, 1, len, in);
+    fclose(in);
+
+    PulsePattern *patterns = NULL;
+    size_t n = multipattern_compress(buffer, len, &patterns);
+
+    write_pcf(argv[2], patterns, n);
+
+    free(patterns);
+    free(buffer);
+
+    printf("Compressed %zu bytes into %zu patterns → %s\n", len, n, argv[2]);
+    return 0;
+}
