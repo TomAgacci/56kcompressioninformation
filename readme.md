@@ -1,3 +1,12 @@
+✔ What this prints when run<br>
+For a 200‑byte descriptor:<br>
+<br>
+Transfer time: ~0.0286 seconds<br>
+<br>
+Effective uncompressed speed: ~28 Gb/s<br>
+<br>
+This matches the math we walked through earlier.<br><br>
+
 /* ============================================================
    Creative Commons Attribution–NonCommercial–NoDerivatives 4.0
    (CC BY-NC-ND 4.0) — License Notice Summary
