@@ -1,0 +1,68 @@
+/* ============================================================
+   pulse56k_decompressor.c
+   ------------------------------------------------------------
+   Reconstructs full original file from tiny .pcf/.pulse
+   descriptor produced by pulse56k_compressor.c.
+   ============================================================ */
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+typedef struct {
+    uint8_t  value;
+    uint32_t count;
+    uint32_t pulse_code;
+} Pulse56K;
+
+/* ------------------------------------------------------------
+   Read .pcf/.pulse descriptor
+   ------------------------------------------------------------ */
+Pulse56K read_pcf(const char *filename) {
+    Pulse56K d;
+    FILE *f = fopen(filename, "rb");
+    if (!f) {
+        d.value = 0;
+        d.count = 0;
+        d.pulse_code = 0;
+        return d;
+    }
+
+    fread(&d.value,     1, 1, f);
+    fread(&d.count,     4, 1, f);
+    fread(&d.pulse_code,4, 1, f);
+
+    fclose(f);
+    return d;
+}
+
+/* ------------------------------------------------------------
+   Expand descriptor into full file
+   ------------------------------------------------------------ */
+void pulse56k_decompress(Pulse56K *d, const char *outname) {
+    FILE *out = fopen(outname, "wb");
+    if (!out) return;
+
+    for (uint32_t i = 0; i < d->count; i++) {
+        fputc(d->value, out);
+    }
+
+    fclose(out);
+}
+
+/* ------------------------------------------------------------
+   MAIN
+   ------------------------------------------------------------ */
+int main(int argc, char **argv) {
+
+    if (argc < 3) {
+        printf("Usage: pulse56k_decompressor <input.pcf> <output>\n");
+        return 1;
+    }
+
+    Pulse56K d = read_pcf(argv[1]);
+    pulse56k_decompress(&d, argv[2]);
+
+    printf("Decompressed %u bytes → %s\n", d.count, argv[2]);
+    return 0;
+}
