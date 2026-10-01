@@ -1,0 +1,11 @@
+/* in pulse_layers_api.h */
+
+typedef struct {
+    uint8_t class_id;
+    uint8_t motif_id;
+    PulseSymbol pulses[8];
+} EntropyMotif;
+
+EntropyMotif *pulse_entropy_layer(const PulseMotif *motifs,
+                                  size_t count,
+                                  size_t *out_count);
