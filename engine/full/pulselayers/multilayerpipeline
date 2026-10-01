@@ -1,0 +1,21 @@
+/* bytes -> raw pulses (Layer0) */
+PulseSymbol *raw = NULL;
+size_t n_raw = bytes_to_raw_pulses(data, len, &raw);
+
+/* raw pulses -> quantized codes (Layer1) */
+PulseCode *codes = NULL;
+size_t n_codes = 0;
+codes = quantize_pulses(raw, n_raw, &n_codes);
+
+/* codes -> RLE (Layer2) */
+PulseRLE *rle = NULL;
+size_t n_rle = 0;
+rle = compress_pulse_rle(codes, n_codes, &n_rle);
+
+/* RLE -> meta-pulses (Layer3) */
+MetaPulse *meta = NULL;
+size_t n_meta = 0;
+meta = rle_to_meta_pulses(rle, n_rle, &n_meta);
+
+/* meta-pulses now feed your existing pulse/timing/modem engine */
+send_pulses_over_56k_phonic((PulseSymbol *)meta, n_meta);
