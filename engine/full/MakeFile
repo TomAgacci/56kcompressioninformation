@@ -1,0 +1,18 @@
+CC      := gcc
+CFLAGS  := -O2 -Wall -std=c11
+
+SRC     := compression_and_timing.c modem_and_morse.c v92_router_and_latency.c engine_main.c
+OBJ     := $(SRC:.c=.o)
+
+TARGET  := pulse_ohm_engine
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+    $(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
+
+%.o: %.c
+    $(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+    rm -f $(OBJ) $(TARGET)
