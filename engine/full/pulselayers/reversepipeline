@@ -1,0 +1,24 @@
+/* receive meta-pulses from engine */
+MetaPulse *meta_rx = NULL;
+size_t n_meta_rx = 0;
+/* ... fill meta_rx from modem/timing path ... */
+
+/* meta -> RLE */
+PulseRLE *rle_rx = NULL;
+size_t n_rle_rx = 0;
+rle_rx = meta_pulses_to_rle(meta_rx, n_meta_rx, &n_rle_rx);
+
+/* RLE -> codes */
+PulseCode *codes_rx = NULL;
+size_t n_codes_rx = 0;
+codes_rx = expand_pulse_rle(rle_rx, n_rle_rx, &n_codes_rx);
+
+/* codes -> raw pulses */
+PulseSymbol *raw_rx = NULL;
+size_t n_raw_rx = 0;
+raw_rx = dequantize_pulses(codes_rx, n_codes_rx, &n_raw_rx);
+
+/* raw pulses -> bytes (your existing reconstruction) */
+uint8_t *file_out = NULL;
+size_t out_len = 0;
+/* plug raw_rx into your patterns/file reconstruction path */
